@@ -1,12 +1,12 @@
 // ==UserScript==
-// @id iitc-plugin-ingressportalcsvexport@zetaphor
-// @name IITC Plugin: Ingress Portal CSV Export
+// @id iitc-plugin-ingressportaljsonexport@supergnaw
+// @name IITC Plugin: Ingress Portal JSON Export
 // @category Information
-// @version 0.0.5
-// @namespace http://github.com/Zetaphor/IITC-Ingress-Portal-CSV-Export
-// @updateURL https://raw.githubusercontent.com/Zetaphor/IITC-Ingress-Portal-CSV-Export/master/ingress_export.js
-// @downloadURL https://raw.githubusercontent.com/Zetaphor/IITC-Ingress-Portal-CSV-Export/master/ingress_export.js
-// @description Exports portals to a CSV list
+// @version 1.0.0
+// @namespace http://github.com/supergnaw/IITC-Ingress-Portal-JSON-Export
+// @updateURL https://raw.githubusercontent.com/supergnaw/IITC-Ingress-Portal-JSON-Export/master/ingress_export.js
+// @downloadURL https://raw.githubusercontent.com/supergnaw/IITC-Ingress-Portal-JSON-Export/master/ingress_export.js
+// @description Exports portals to a JSON list
 // @include https://*ingress.com/intel*
 // @include http://*ingress.com/intel*
 // @match https://*ingress.com/intel*
@@ -25,8 +25,8 @@ function wrapper() {
     }
 
     // base context for plugin
-    window.plugin.portal_csv_export = function() {};
-    var self = window.plugin.portal_csv_export;
+    window.plugin.portal_json_export = function() {};
+    var self = window.plugin.portal_json_export;
 
     window.master_portal_list = {};
     window.portal_scraper_enabled = false;
@@ -101,7 +101,8 @@ function wrapper() {
         str = title;
         str = str.replace(/\"/g, "\\\"");
         str = str.replace(";", "_");
-        str = '"'+str+'"' + "," + href + "," + '"'+image+'"';
+        // str = '"'+str+'"' + "," + href + "," + '"'+image+'"';
+        str = "{\"guid\":\"" +portalGuid + "\",\"position\":{\"lat\":" + lat + ",\"lng\":" + lng + "},\"img\":\"" + image + "\",\"name\":\"" + str + "\"},";
         if (window.plugin.keys && (typeof window.portals[portalGuid] !== "undefined")) {
             var keyCount =window.plugin.keys.keys[portalGuid] || 0;
             str = str + "," + keyCount;
@@ -110,6 +111,7 @@ function wrapper() {
     };
 
     self.genStrFromPortal = function genStrFromPortal(portal, portalGuid) {
+        console.log( portal );
         var lat = portal._latlng.lat,
             lng = portal._latlng.lng,
             title = portal.options.data.title || "untitled portal";
@@ -159,25 +161,27 @@ function wrapper() {
         return obj;
     };
 
-    self.generateCsvData = function() {
-        var csvData = 'Name, Latitude, Longitude, Image' + "\n";
+    self.generateJsonData = function() {
+        // var jsonData = 'Name, Latitude, Longitude, Image' + "\n";
+        var jsonData = "[\n";
         $.each(window.master_portal_list, function(key, value) {
-            csvData += (value + "\n");
+            jsonData += (value + "\n");
         });
+        jsonData = jsonData.slice( 0, -2 ) + "]";
 
-        return csvData;
+        return jsonData;
     };
 
-    self.downloadCSV = function() {
-        var csvData = self.generateCsvData();
+    self.downloadJSON = function() {
+        var jsonData = self.generateJsonData();
         var link = document.createElement("a");
-        link.download = 'Portal_Export.csv';
-        link.href = "data:text/csv," + escape(csvData);
+        link.download = 'Portal_Export.json';
+        link.href = "data:text/json," + escape(jsonData);
         link.click();
     }
 
     self.showDialog = function showDialog(o) {
-        var csvData = self.generateCsvData();
+        var jsonData = self.generateJsonData();
 
         var data = `
         <form name='maxfield' action='#' method='post' target='_blank'>
@@ -187,14 +191,14 @@ function wrapper() {
                         name='portal_list_area'
                         rows='30'
                         placeholder='Zoom level must be 15 or higher for portal data to load'
-                        style="width: 100%; white-space: nowrap;">${csvData}</textarea>
+                        style="width: 100%; white-space: nowrap;">${jsonData}</textarea>
                 </div>
             </div>
         </form>
         `;
 
         var dia = window.dialog({
-            title: "Portal CSV Export",
+            title: "Portal JSON Export",
             html: data
         }).parent();
         $(".ui-dialog-buttonpane", dia).remove();
@@ -256,14 +260,14 @@ function wrapper() {
             $('#scraperStatus').html('Stopped').css('color', 'red');
             $('#startScraper').show();
             $('#stopScraper').hide();
-            $('#csvControlsBox').hide();
+            $('#jsonControlsBox').hide();
             $('#totalPortals').hide();
         } else {
             window.portal_scraper_enabled = true;
             $('#scraperStatus').html('Running').css('color', 'green');
             $('#startScraper').hide();
             $('#stopScraper').show();
-            $('#csvControlsBox').show();
+            $('#jsonControlsBox').show();
             $('#totalPortals').show();
             self.updateTotalScrapedCount();
         }
@@ -276,30 +280,30 @@ function wrapper() {
         var link = $("");
         $("#toolbox").append(link);
 
-        var csvToolbox = `
-        <div id="csvToolbox" style="position: relative;">
-            <p style="margin: 5px 0 5px 0; text-align: center; font-weight: bold;">Portal CSV Exporter</p>
-            <a id="startScraper" style="position: absolute; top: 0; left: 0; margin: 0 5px 0 5px;" onclick="window.plugin.portal_csv_export.toggleStatus();" title="Start the portal data scraper">Start</a>
-            <a id="stopScraper" style="position: absolute; top: 0; left: 0; display: none; margin: 0 5px 0 5px;" onclick="window.plugin.portal_csv_export.toggleStatus();" title="Stop the portal data scraper">Stop</a>
+        var jsonToolbox = `
+        <div id="jsonToolbox" style="position: relative;">
+            <p style="margin: 5px 0 5px 0; text-align: center; font-weight: bold;">Portal JSON Exporter</p>
+            <a id="startScraper" style="position: absolute; top: 0; left: 0; margin: 0 5px 0 5px;" onclick="window.plugin.portal_json_export.toggleStatus();" title="Start the portal data scraper">Start</a>
+            <a id="stopScraper" style="position: absolute; top: 0; left: 0; display: none; margin: 0 5px 0 5px;" onclick="window.plugin.portal_json_export.toggleStatus();" title="Stop the portal data scraper">Stop</a>
 
             <div class="zoomControlsBox" style="margin-top: 5px; padding: 5px 0 5px 5px;">
                 Current Zoom Level: <span id="currentZoomLevel">0</span>
-                <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_csv_export.setZoomLevel();" title="Set zoom level to enable portal data download.">Set Zoom Level</a>
+                <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_json_export.setZoomLevel();" title="Set zoom level to enable portal data download.">Set Zoom Level</a>
             </div>
 
             <p style="margin:0 0 0 5px;">Scraper Status: <span style="color: red;" id="scraperStatus">Stopped</span></p>
             <p id="totalPortals" style="display: none; margin:0 0 0 5px;">Total Portals Scraped: <span id="totalScrapedPortals">0</span></p>
 
-            <div id="csvControlsBox" style="display: none; margin-top: 5px; padding: 5px 0 5px 5px; border-top: 1px solid #20A8B1;">
-                <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_csv_export.gen();" title="View the CSV portal data.">View Data</a>
-                <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_csv_export.downloadCSV();" title="Download the CSV portal data.">Download CSV</a>
+            <div id="jsonControlsBox" style="display: none; margin-top: 5px; padding: 5px 0 5px 5px; border-top: 1px solid #20A8B1;">
+                <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_json_export.gen();" title="View the JSON portal data.">View Data</a>
+                <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_json_export.downloadJSON();" title="Download the JSON portal data.">Download JSON</a>
             </div>
         </div>
         `;
 
-        $(csvToolbox).insertAfter('#toolbox');
+        $(jsonToolbox).insertAfter('#toolbox');
 
-        window.csvUpdateTimer = window.setInterval(self.updateTimer, 500);
+        window.jsonUpdateTimer = window.setInterval(self.updateTimer, 500);
 
         // delete self to ensure init can't be run again
         delete self.init;
@@ -313,6 +317,7 @@ function wrapper() {
         window.bootPlugins = [self.setup];
     }
 }
+
 // inject plugin into page
 var script = document.createElement("script");
 script.appendChild(document.createTextNode("(" + wrapper + ")();"));
