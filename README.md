@@ -1,5 +1,5 @@
-# IITC Ingress Portal CSV Export
-This is a plugin for the [Ingress Total Conversion](http://github.com/iitc-project/ingress-intel-total-conversion) userscript. It allows you to parse the name, image, and coordinates for all Ingress portals within the viewport. This portal data can then be downloaded as a CSV file or viewed in-browser.
+# IITC Ingress Portal JSON Export
+This is a plugin for the [Ingress Total Conversion](http://github.com/iitc-project/ingress-intel-total-conversion) userscript. It allows you to parse the GUID, name, image, and coordinates for all Ingress portals within the viewport. This portal data can then be downloaded as a JSON file or viewed in-browser.
 
 ### Usage
 After installing the userscript, navigate to the [Ingress intel page](https://www.ingress.com/intel).
